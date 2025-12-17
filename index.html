@@ -59,11 +59,30 @@
         <h3>Add Boulder Problem</h3>
         <label for="boulderName">Boulder Name:</label>
         <input type="text" id="boulderName" placeholder="Enter boulder name">
+        <label for="boulderGrade">Grade:</label>
+        <select id="boulderGrade">
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6A">6A</option>
+            <option value="6A+">6A+</option>
+            <option value="6B">6B</option>
+            <option value="6B+">6B+</option>
+            <option value="6C">6C</option>
+            <option value="6C+">6C+</option>
+            <option value="7A">7A</option>
+            <option value="7A+">7A+</option>
+            <option value="7B">7B</option>
+            <option value="7B+">7B+</option>
+            <option value="7C">7C</option>
+            <option value="7C+">7C+</option>
+            <option value="fun">fun</option>
+        </select>
         <button id="addButton">Add Boulder</button>
     </dialog>
 
     <dialog id="viewDialog">
-        <h3>Boulder Problem</h3>
+        <h3 id="boulderTitle">Boulder</h3>
         <p id="boulderInfo"></p>
         <button id="closeButton">Close</button>
         <button id="deleteButton">Delete</button>
@@ -74,19 +93,46 @@
         const addDialog = document.getElementById('boulderDialog');
         const viewDialog = document.getElementById('viewDialog');
         const boulderNameInput = document.getElementById('boulderName');
+        const boulderGradeInput = document.getElementById('boulderGrade');
         const addButton = document.getElementById('addButton');
         const closeButton = document.getElementById('closeButton');
         const boulderInfo = document.getElementById('boulderInfo');
+        const boulderTitle = document.getElementById('boulderTitle');
         const deleteButton = document.getElementById('deleteButton');
 
         let selectedCircle = null;
+
+        // Grade to color mapping
+        function getGradeColor(grade) {
+            switch (grade) {
+                case '3': return 'gray';
+                case '4': return 'green';
+                case '5': return 'orange';
+                case '6A': return 'yellow';
+                case '6A+': return '#bfa900'; // darker yellow
+                case '6B': return 'blue';
+                case '6B+': return '#003399'; // darker blue
+                case '6C': return 'red';
+                case '6C+': return '#990000'; // darker red
+                case '7A': return '#222'; // very dark grey
+                case '7A+': return '#111'; // even darker grey
+                case '7B': return 'white';
+                case '7B+': return '#f5f5f5'; // off-white
+                case '7C': return 'purple';
+                case '7C+': return '#4b006e'; // dark purple
+                case 'fun': return 'pink';
+                default: return 'white';
+            }
+        }
 
         // Initialize circle colors and plus signs based on stored boulders
         circles.forEach(circle => {
             const plusId = circle.id.replace('circle', 'plus');
             const plus = document.getElementById(plusId);
-            if (localStorage.getItem(circle.id)) {
-                circle.setAttribute('fill', 'blue');
+            const boulderData = localStorage.getItem(circle.id);
+            if (boulderData) {
+                const { grade } = JSON.parse(boulderData);
+                circle.setAttribute('fill', getGradeColor(grade));
                 circle.setAttribute('stroke', 'none');
                 plus.style.display = 'none';
             } else {
@@ -108,10 +154,12 @@
                 });
                 // Add event listener to the circle for viewing a boulder (only if it exists)
                 circle.addEventListener('click', () => {
-                    const boulderName = localStorage.getItem(circle.id);
-                    if (boulderName) {
+                    const boulderData = localStorage.getItem(circle.id);
+                    if (boulderData) {
                         selectedCircle = circle;
-                        boulderInfo.textContent = `Name: ${boulderName}`;
+                        const { name, grade } = JSON.parse(boulderData);
+                        document.getElementById('boulderTitle').textContent = `Boulder: ${name}`;
+                        document.getElementById('boulderInfo').textContent = `Grade: ${grade}`;
                         viewDialog.showModal();
                     }
                 });
@@ -119,13 +167,20 @@
 
         addButton.addEventListener('click', () => {
             const name = boulderNameInput.value.trim();
+            const grade = boulderGradeInput.value;
             if (name) {
-                localStorage.setItem(selectedCircle.id, name);
-                selectedCircle.setAttribute('fill', 'blue');
-                selectedCircle.setAttribute('stroke', 'none');
+                const boulderData = JSON.stringify({ name, grade });
+                localStorage.setItem(selectedCircle.id, boulderData);
+                const fillColor = getGradeColor(grade);
+                selectedCircle.setAttribute('fill', fillColor);
+                if (fillColor === 'white' || fillColor === '#f5f5f5') {
+                    selectedCircle.setAttribute('stroke', '#bbb');
+                } else {
+                    selectedCircle.setAttribute('stroke', 'none');
+                }
                 const plusId = selectedCircle.id.replace('circle', 'plus');
                 document.getElementById(plusId).style.display = 'none';
-                console.log(`Added boulder "${name}" at ${selectedCircle.id}`);
+                console.log(`Added boulder "${name}" (grade: ${grade}) at ${selectedCircle.id}`);
                 boulderNameInput.value = '';
                 addDialog.close();
             } else {
