@@ -50,9 +50,15 @@
 <body>
     <svg width="400" height="300" viewBox="0 0 400 300">
         <circle cx="100" cy="150" r="20" fill="white" stroke="black" stroke-width="2" id="circle1"></circle>
-        <text x="100" y="155" text-anchor="middle" fill="black" font-size="20" id="plus1">+</text>
+        <g id="plus1group">
+            <rect x="85" y="140" width="30" height="30" fill="transparent" style="pointer-events: all;"></rect>
+            <text x="100" y="155" text-anchor="middle" fill="black" font-size="20" id="plus1" style="pointer-events: all;">+</text>
+        </g>
         <circle cx="300" cy="150" r="20" fill="white" stroke="black" stroke-width="2" id="circle2"></circle>
-        <text x="300" y="155" text-anchor="middle" fill="black" font-size="20" id="plus2">+</text>
+        <g id="plus2group">
+            <rect x="285" y="140" width="30" height="30" fill="transparent" style="pointer-events: all;"></rect>
+            <text x="300" y="155" text-anchor="middle" fill="black" font-size="20" id="plus2" style="pointer-events: all;">+</text>
+        </g>
     </svg>
 
     <dialog id="boulderDialog">
@@ -128,41 +134,66 @@
         // Initialize circle colors and plus signs based on stored boulders
         circles.forEach(circle => {
             const plusId = circle.id.replace('circle', 'plus');
-            const plus = document.getElementById(plusId);
+            const plusGroupId = plusId + 'group';
+            const plusGroup = document.getElementById(plusGroupId);
             const boulderData = localStorage.getItem(circle.id);
+            let validData = null;
             if (boulderData) {
-                const { grade } = JSON.parse(boulderData);
+                try {
+                    validData = JSON.parse(boulderData);
+                } catch (e) {
+                    // Invalid/corrupt data, clean it up
+                    localStorage.removeItem(circle.id);
+                }
+            }
+            if (validData) {
+                const { grade } = validData;
                 circle.setAttribute('fill', getGradeColor(grade));
                 circle.setAttribute('stroke', 'none');
-                plus.style.display = 'none';
+                if (plusGroup) plusGroup.style.display = 'none';
             } else {
                 circle.setAttribute('fill', 'white');
                 circle.setAttribute('stroke', 'black');
-                plus.style.display = 'block';
+                if (plusGroup) plusGroup.style.display = 'block';
             }
         });
 
         circles.forEach(circle => {
             const plusId = circle.id.replace('circle', 'plus');
-            const plus = document.getElementById(plusId);
-                // Only add event listener to the plus sign for adding a boulder
-                plus.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    selectedCircle = circle;
-                    addDialog.showModal();
-                    boulderNameInput.focus();
-                });
-                // Add event listener to the circle for viewing a boulder (only if it exists)
-                circle.addEventListener('click', () => {
-                    const boulderData = localStorage.getItem(circle.id);
-                    if (boulderData) {
+            const plusGroupId = plusId + 'group';
+            const plusRect = document.querySelector(`#${plusGroupId} rect`);
+            const plusText = document.getElementById(plusId);
+            // Attach event listeners to both rect and text for maximum reliability
+            [plusRect, plusText].forEach(plusElem => {
+                if (plusElem) {
+                    plusElem.addEventListener('click', (event) => {
+                        console.log('Clicked + for', circle.id);
+                        event.stopPropagation();
                         selectedCircle = circle;
-                        const { name, grade } = JSON.parse(boulderData);
+                        addDialog.showModal();
+                        boulderNameInput.focus();
+                    });
+                }
+            });
+            // Add event listener to the circle for viewing a boulder (only if it exists)
+            circle.addEventListener('click', () => {
+                const boulderData = localStorage.getItem(circle.id);
+                if (boulderData) {
+                    let validData = null;
+                    try {
+                        validData = JSON.parse(boulderData);
+                    } catch (e) {
+                        localStorage.removeItem(circle.id);
+                    }
+                    if (validData) {
+                        selectedCircle = circle;
+                        const { name, grade } = validData;
                         document.getElementById('boulderTitle').textContent = `Boulder: ${name}`;
                         document.getElementById('boulderInfo').textContent = `Grade: ${grade}`;
                         viewDialog.showModal();
                     }
-                });
+                }
+            });
         });
 
         addButton.addEventListener('click', () => {
@@ -179,7 +210,9 @@
                     selectedCircle.setAttribute('stroke', 'none');
                 }
                 const plusId = selectedCircle.id.replace('circle', 'plus');
-                document.getElementById(plusId).style.display = 'none';
+                const plusGroupId = plusId + 'group';
+                const plusGroup = document.getElementById(plusGroupId);
+                if (plusGroup) plusGroup.style.display = 'none';
                 console.log(`Added boulder "${name}" (grade: ${grade}) at ${selectedCircle.id}`);
                 boulderNameInput.value = '';
                 addDialog.close();
@@ -198,7 +231,9 @@
                 selectedCircle.setAttribute('fill', 'white');
                 selectedCircle.setAttribute('stroke', 'black');
                 const plusId = selectedCircle.id.replace('circle', 'plus');
-                document.getElementById(plusId).style.display = 'block';
+                const plusGroupId = plusId + 'group';
+                const plusGroup = document.getElementById(plusGroupId);
+                if (plusGroup) plusGroup.style.display = 'block';
                 viewDialog.close();
             }
         });
