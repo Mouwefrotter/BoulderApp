@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boulder Gym Map</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        svg {
+            border: 1px solid #ccc;
+        }
+        #plus1, #plus2 {
+            cursor: pointer;
+        }
+        dialog {
+            padding: 20px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        dialog::backdrop {
+            background: rgba(0,0,0,0.5);
+        }
+        input {
+            margin: 10px 0;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <svg width="400" height="300" viewBox="0 0 400 300">
+        <circle cx="100" cy="150" r="20" fill="white" stroke="black" stroke-width="2" id="circle1"></circle>
+        <text x="100" y="155" text-anchor="middle" fill="black" font-size="20" id="plus1">+</text>
+        <circle cx="300" cy="150" r="20" fill="white" stroke="black" stroke-width="2" id="circle2"></circle>
+        <text x="300" y="155" text-anchor="middle" fill="black" font-size="20" id="plus2">+</text>
+    </svg>
+
+    <dialog id="boulderDialog">
+        <h3>Add Boulder Problem</h3>
+        <label for="boulderName">Boulder Name:</label>
+        <input type="text" id="boulderName" placeholder="Enter boulder name">
+        <button id="addButton">Add Boulder</button>
+    </dialog>
+
+    <dialog id="viewDialog">
+        <h3>Boulder Problem</h3>
+        <p id="boulderInfo"></p>
+        <button id="closeButton">Close</button>
+        <button id="deleteButton">Delete</button>
+    </dialog>
+
+    <script>
+        const circles = document.querySelectorAll('circle');
+        const addDialog = document.getElementById('boulderDialog');
+        const viewDialog = document.getElementById('viewDialog');
+        const boulderNameInput = document.getElementById('boulderName');
+        const addButton = document.getElementById('addButton');
+        const closeButton = document.getElementById('closeButton');
+        const boulderInfo = document.getElementById('boulderInfo');
+        const deleteButton = document.getElementById('deleteButton');
+
+        let selectedCircle = null;
+
+        // Initialize circle colors and plus signs based on stored boulders
+        circles.forEach(circle => {
+            const plusId = circle.id.replace('circle', 'plus');
+            const plus = document.getElementById(plusId);
+            if (localStorage.getItem(circle.id)) {
+                circle.setAttribute('fill', 'blue');
+                circle.setAttribute('stroke', 'none');
+                plus.style.display = 'none';
+            } else {
+                circle.setAttribute('fill', 'white');
+                circle.setAttribute('stroke', 'black');
+                plus.style.display = 'block';
+            }
+        });
+
+        circles.forEach(circle => {
+            const plusId = circle.id.replace('circle', 'plus');
+            const plus = document.getElementById(plusId);
+                // Only add event listener to the plus sign for adding a boulder
+                plus.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    selectedCircle = circle;
+                    addDialog.showModal();
+                    boulderNameInput.focus();
+                });
+                // Add event listener to the circle for viewing a boulder (only if it exists)
+                circle.addEventListener('click', () => {
+                    const boulderName = localStorage.getItem(circle.id);
+                    if (boulderName) {
+                        selectedCircle = circle;
+                        boulderInfo.textContent = `Name: ${boulderName}`;
+                        viewDialog.showModal();
+                    }
+                });
+        });
+
+        addButton.addEventListener('click', () => {
+            const name = boulderNameInput.value.trim();
+            if (name) {
+                localStorage.setItem(selectedCircle.id, name);
+                selectedCircle.setAttribute('fill', 'blue');
+                selectedCircle.setAttribute('stroke', 'none');
+                const plusId = selectedCircle.id.replace('circle', 'plus');
+                document.getElementById(plusId).style.display = 'none';
+                console.log(`Added boulder "${name}" at ${selectedCircle.id}`);
+                boulderNameInput.value = '';
+                addDialog.close();
+            } else {
+                alert('Please enter a boulder name.');
+            }
+        });
+
+        closeButton.addEventListener('click', () => {
+            viewDialog.close();
+        });
+
+        deleteButton.addEventListener('click', () => {
+            if (confirm('Are you sure you want to delete this boulder?')) {
+                localStorage.removeItem(selectedCircle.id);
+                selectedCircle.setAttribute('fill', 'white');
+                selectedCircle.setAttribute('stroke', 'black');
+                const plusId = selectedCircle.id.replace('circle', 'plus');
+                document.getElementById(plusId).style.display = 'block';
+                viewDialog.close();
+            }
+        });
+
+        // Close dialogs on outside click or escape
+        addDialog.addEventListener('click', (e) => {
+            if (e.target === addDialog) {
+                addDialog.close();
+            }
+        });
+
+        viewDialog.addEventListener('click', (e) => {
+            if (e.target === viewDialog) {
+                viewDialog.close();
+            }
+        });
+    </script>
+</body>
+</html>
