@@ -16,7 +16,10 @@
         svg {
             border: 1px solid #ccc;
         }
-        #plus1, #plus2 {
+        /* Make all plus signs and their clickable areas show a pointer cursor */
+        #plus1, #plus2, #plus3, #plus4, #plus5, #plus6,
+        #plus1group, #plus2group, #plus3group, #plus4group, #plus5group, #plus6group,
+        #plus1group rect, #plus2group rect, #plus3group rect, #plus4group rect, #plus5group rect, #plus6group rect {
             cursor: pointer;
         }
         dialog {
@@ -48,16 +51,43 @@
     </style>
 </head>
 <body>
-    <svg width="400" height="300" viewBox="0 0 400 300">
-        <circle cx="100" cy="150" r="20" fill="white" stroke="black" stroke-width="2" id="circle1"></circle>
+    <svg width="400" height="350" viewBox="0 0 400 350">
+        <!-- Hexagon layout: 6 circles -->
+        <!-- Top -->
+        <circle cx="200" cy="60" r="20" fill="white" stroke="black" stroke-width="2" id="circle1"></circle>
         <g id="plus1group">
-            <rect x="85" y="140" width="30" height="30" fill="transparent" style="pointer-events: all;"></rect>
-            <text x="100" y="155" text-anchor="middle" fill="black" font-size="20" id="plus1" style="pointer-events: all;">+</text>
+            <rect x="185" y="45" width="30" height="30" fill="transparent" style="pointer-events: all;"></rect>
+            <text x="200" y="70" text-anchor="middle" fill="black" font-size="20" id="plus1" style="pointer-events: all;">+</text>
         </g>
-        <circle cx="300" cy="150" r="20" fill="white" stroke="black" stroke-width="2" id="circle2"></circle>
+        <!-- Top right -->
+        <circle cx="300" cy="120" r="20" fill="white" stroke="black" stroke-width="2" id="circle2"></circle>
         <g id="plus2group">
-            <rect x="285" y="140" width="30" height="30" fill="transparent" style="pointer-events: all;"></rect>
-            <text x="300" y="155" text-anchor="middle" fill="black" font-size="20" id="plus2" style="pointer-events: all;">+</text>
+            <rect x="285" y="105" width="30" height="30" fill="transparent" style="pointer-events: all;"></rect>
+            <text x="300" y="130" text-anchor="middle" fill="black" font-size="20" id="plus2" style="pointer-events: all;">+</text>
+        </g>
+        <!-- Bottom right -->
+        <circle cx="300" cy="230" r="20" fill="white" stroke="black" stroke-width="2" id="circle3"></circle>
+        <g id="plus3group">
+            <rect x="285" y="215" width="30" height="30" fill="transparent" style="pointer-events: all;"></rect>
+            <text x="300" y="240" text-anchor="middle" fill="black" font-size="20" id="plus3" style="pointer-events: all;">+</text>
+        </g>
+        <!-- Bottom -->
+        <circle cx="200" cy="290" r="20" fill="white" stroke="black" stroke-width="2" id="circle4"></circle>
+        <g id="plus4group">
+            <rect x="185" y="275" width="30" height="30" fill="transparent" style="pointer-events: all;"></rect>
+            <text x="200" y="300" text-anchor="middle" fill="black" font-size="20" id="plus4" style="pointer-events: all;">+</text>
+        </g>
+        <!-- Bottom left -->
+        <circle cx="100" cy="230" r="20" fill="white" stroke="black" stroke-width="2" id="circle5"></circle>
+        <g id="plus5group">
+            <rect x="85" y="215" width="30" height="30" fill="transparent" style="pointer-events: all;"></rect>
+            <text x="100" y="240" text-anchor="middle" fill="black" font-size="20" id="plus5" style="pointer-events: all;">+</text>
+        </g>
+        <!-- Top left -->
+        <circle cx="100" cy="120" r="20" fill="white" stroke="black" stroke-width="2" id="circle6"></circle>
+        <g id="plus6group">
+            <rect x="85" y="105" width="30" height="30" fill="transparent" style="pointer-events: all;"></rect>
+            <text x="100" y="130" text-anchor="middle" fill="black" font-size="20" id="plus6" style="pointer-events: all;">+</text>
         </g>
     </svg>
 
