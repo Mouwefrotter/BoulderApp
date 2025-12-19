@@ -51,7 +51,8 @@
     </style>
 </head>
 <body>
-    <svg width="700" height="400" viewBox="0 0 700 400">
+    <div style="display: flex; align-items: center;">
+        <svg width="700" height="400" viewBox="0 0 700 400">
         <!-- Hexagon 1 (left) -->
         <circle cx="180" cy="80" r="20" fill="white" stroke="black" stroke-width="2" id="circle1"></circle>
         <g id="plus1group"><rect x="165" y="65" width="30" height="30" fill="transparent" style="pointer-events: all;"></rect><text x="180" y="90" text-anchor="middle" fill="black" font-size="20" id="plus1" style="pointer-events: all;">+</text></g>
@@ -78,7 +79,16 @@
         <g id="plus11group"><rect x="445" y="175" width="30" height="30" fill="transparent" style="pointer-events: all;"></rect><text x="460" y="200" text-anchor="middle" fill="black" font-size="20" id="plus11" style="pointer-events: all;">+</text></g>
         <circle cx="460" cy="120" r="20" fill="white" stroke="black" stroke-width="2" id="circle12"></circle>
         <g id="plus12group"><rect x="445" y="105" width="30" height="30" fill="transparent" style="pointer-events: all;"></rect><text x="460" y="130" text-anchor="middle" fill="black" font-size="20" id="plus12" style="pointer-events: all;">+</text></g>
-    </svg>
+        </svg>
+        <div style="display: flex; flex-direction: column; align-items: flex-start; margin-left: 32px;">
+            <button id="statsButton" style="padding: 10px 32px; font-size: 18px;">Stats</button>
+        </div>
+    </div>
+    <dialog id="statsDialog">
+        <h2 style="margin-top: 0;">Stats</h2>
+        <div id="statsContent" style="width: 100%; max-width: 400px; margin: 0 auto;"></div>
+        <button id="closeStatsButton" style="margin-top: 16px;">Close</button>
+    </dialog>
 
     <dialog id="boulderDialog">
         <h3>Add Boulder Problem</h3>
@@ -125,6 +135,69 @@
     </dialog>
 
     <script>
+                        // Bar chart for stats
+                        function renderStatsBarChart() {
+                            // Grade order
+                            const gradeOrder = [
+                                '3', '4', '5', '6A', '6A+', '6B', '6B+', '6C', '6C+',
+                                '7A', '7A+', '7B', '7B+', '7C', '7C+', 'fun'
+                            ];
+                            // Count climbs per grade
+                            const gradeCounts = {};
+                            gradeOrder.forEach(g => gradeCounts[g] = 0);
+                            for (let i = 1; i <= 12; i++) {
+                                const data = localStorage.getItem('circle' + i);
+                                if (data) {
+                                    try {
+                                        const parsed = JSON.parse(data);
+                                        if (parsed.grade && typeof parsed.climbed === 'number') {
+                                            if (gradeCounts.hasOwnProperty(parsed.grade)) {
+                                                gradeCounts[parsed.grade] += parsed.climbed;
+                                            }
+                                        }
+                                    } catch (e) {}
+                                }
+                            }
+                            // Filter out grades with zero climbs
+                            const filteredGrades = gradeOrder.filter(g => gradeCounts[g] > 0);
+                            // Bar chart dimensions
+                            const barHeight = 28;
+                            const barGap = 8;
+                            const labelWidth = 32;
+                            const leftMargin = 100;
+                            // Find the max count for scaling
+                            const maxCount = Math.max(...filteredGrades.map(g => gradeCounts[g]), 1);
+                            // Chart width so the longest bar plus label fits
+                            const chartWidth = Math.min(340, document.getElementById('statsContent').offsetWidth || 340);
+                            const maxBarWidth = chartWidth - leftMargin - labelWidth - 8;
+                            // Build SVG bars
+                            let svg = `<svg width="${chartWidth}" height="${filteredGrades.length * (barHeight + barGap)}">`;
+                            filteredGrades.forEach((grade, idx) => {
+                                const count = gradeCounts[grade];
+                                const color = getGradeColor(grade);
+                                const barW = Math.max(10, Math.round((count / maxCount) * maxBarWidth));
+                                const y = idx * (barHeight + barGap);
+                                svg += `<rect x="${leftMargin}" y="${y}" width="${barW}" height="${barHeight}" fill="${color}" stroke="black" />`;
+                                svg += `<text x="10" y="${y + barHeight/2 + 7}" font-size="18" fill="black">${grade}</text>`;
+                                // Count label always next to bar
+                                const labelX = leftMargin + barW + 8;
+                                svg += `<text x="${labelX}" y="${y + barHeight/2 + 7}" font-size="18" fill="black">${count}</text>`;
+                            });
+                            svg += '</svg>';
+                            // Show chart
+                            document.getElementById('statsContent').innerHTML = filteredGrades.length ? svg : '<p>No climbs yet.</p>';
+                        }
+                // Stats button logic
+                const statsButton = document.getElementById('statsButton');
+                const statsDialog = document.getElementById('statsDialog');
+                const closeStatsButton = document.getElementById('closeStatsButton');
+                statsButton.addEventListener('click', () => {
+                    renderStatsBarChart();
+                    statsDialog.showModal();
+                });
+                closeStatsButton.addEventListener('click', () => {
+                    statsDialog.close();
+                });
         const circles = document.querySelectorAll('circle');
         const addDialog = document.getElementById('boulderDialog');
         const viewDialog = document.getElementById('viewDialog');
