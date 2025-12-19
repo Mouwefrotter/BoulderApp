@@ -356,6 +356,9 @@
                                     }
                                     if (validData) {
                                         validData.climbed = (validData.climbed || 0) + 1;
+                                        const today = new Date().toISOString().slice(0, 10);
+                                        if (!Array.isArray(validData.climbDates)) validData.climbDates = [];
+                                        validData.climbDates.push(today);
                                         localStorage.setItem(circleId, JSON.stringify(validData));
                                         // Always fetch the latest count from storage and update the label
                                         let climbed = 0;
@@ -381,7 +384,7 @@
             const name = boulderNameInput.value.trim();
             const grade = boulderGradeInput.value;
             if (name) {
-                const boulderData = JSON.stringify({ name, grade, climbed: 0 });
+                const boulderData = JSON.stringify({ name, grade, climbed: 0, climbDates: [] });;
                 localStorage.setItem(selectedCircle.id, boulderData);
                 const fillColor = getGradeColor(grade);
                 selectedCircle.setAttribute('fill', fillColor);
