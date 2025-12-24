@@ -83,7 +83,19 @@
         <div style="display: flex; flex-direction: column; align-items: flex-start; margin-left: 32px; gap: 12px;">
             <button id="statsButton" style="padding: 10px 32px; font-size: 18px;">Stats</button>
             <button id="todayStatsButton" style="padding: 10px 32px; font-size: 18px; background: #28a745;">Today Stats</button>
+            <button id="highestLevelButton" style="padding: 10px 32px; font-size: 18px; background: #6f42c1;">Highest Level</button>
+            <button id="levelTodayButton" style="padding: 10px 32px; font-size: 18px; background: #20c997;">Level Today</button>
+            <dialog id="levelTodayDialog">
+                <h2 style="margin-top: 0; color: #20c997;">Highest Level Climbed Today</h2>
+                <div id="levelTodayContent" style="width: 100%; max-width: 400px; margin: 0 auto; font-size: 1.5em; text-align: center;"></div>
+                <button id="closeLevelTodayButton" style="margin-top: 16px;">Close</button>
+            </dialog>
         </div>
+        <dialog id="highestLevelDialog">
+            <h2 style="margin-top: 0; color: #6f42c1;">Highest Level Climbed</h2>
+            <div id="highestLevelContent" style="width: 100%; max-width: 400px; margin: 0 auto; font-size: 1.5em; text-align: center;"></div>
+            <button id="closeHighestLevelButton" style="margin-top: 16px;">Close</button>
+        </dialog>
     </div>
 
     <dialog id="statsDialog">
@@ -143,6 +155,94 @@
     </dialog>
 
     <script>
+                        // Highest level today logic
+                        function getHighestLevelClimbedToday() {
+                            const gradeOrderForCompare = [
+                                '3', '4', '5', '6A', '6A+', '6B', '6B+', '6C', '6C+',
+                                '7A', '7A+', '7B', '7B+', '7C', '7C+'
+                            ];
+                            let highestIdx = -1;
+                            let highestGrade = null;
+                            const today = new Date().toISOString().slice(0, 10);
+                            for (let i = 1; i <= 12; i++) {
+                                const data = localStorage.getItem('circle' + i);
+                                if (data) {
+                                    try {
+                                        const parsed = JSON.parse(data);
+                                        if (parsed.grade && parsed.grade !== 'fun' && Array.isArray(parsed.climbDates)) {
+                                            // Only count if climbed today
+                                            if (parsed.climbDates.some(d => d === today)) {
+                                                const idx = gradeOrderForCompare.indexOf(parsed.grade);
+                                                if (idx > highestIdx) {
+                                                    highestIdx = idx;
+                                                    highestGrade = parsed.grade;
+                                                }
+                                            }
+                                        }
+                                    } catch (e) {}
+                                }
+                            }
+                            return highestGrade;
+                        }
+
+                        const levelTodayButton = document.getElementById('levelTodayButton');
+                        const levelTodayDialog = document.getElementById('levelTodayDialog');
+                        const levelTodayContent = document.getElementById('levelTodayContent');
+                        const closeLevelTodayButton = document.getElementById('closeLevelTodayButton');
+                        levelTodayButton.addEventListener('click', () => {
+                            const highest = getHighestLevelClimbedToday();
+                            if (highest) {
+                                levelTodayContent.textContent = `Your highest climbed level today: ${highest}`;
+                            } else {
+                                levelTodayContent.textContent = 'No levels climbed today.';
+                            }
+                            levelTodayDialog.showModal();
+                        });
+                        closeLevelTodayButton.addEventListener('click', () => {
+                            levelTodayDialog.close();
+                        });
+                        // Highest level logic
+                        const gradeOrderForCompare = [
+                            '3', '4', '5', '6A', '6A+', '6B', '6B+', '6C', '6C+',
+                            '7A', '7A+', '7B', '7B+', '7C', '7C+'
+                        ];
+                        function getHighestLevelClimbed() {
+                            let highestIdx = -1;
+                            let highestGrade = null;
+                            for (let i = 1; i <= 12; i++) {
+                                const data = localStorage.getItem('circle' + i);
+                                if (data) {
+                                    try {
+                                        const parsed = JSON.parse(data);
+                                        if (parsed.grade && parsed.grade !== 'fun' && parsed.climbed > 0) {
+                                            const idx = gradeOrderForCompare.indexOf(parsed.grade);
+                                            if (idx > highestIdx) {
+                                                highestIdx = idx;
+                                                highestGrade = parsed.grade;
+                                            }
+                                        }
+                                    } catch (e) {}
+                                }
+                            }
+                            return highestGrade;
+                        }
+
+                        const highestLevelButton = document.getElementById('highestLevelButton');
+                        const highestLevelDialog = document.getElementById('highestLevelDialog');
+                        const highestLevelContent = document.getElementById('highestLevelContent');
+                        const closeHighestLevelButton = document.getElementById('closeHighestLevelButton');
+                        highestLevelButton.addEventListener('click', () => {
+                            const highest = getHighestLevelClimbed();
+                            if (highest) {
+                                highestLevelContent.textContent = `Your highest climbed level: ${highest}`;
+                            } else {
+                                highestLevelContent.textContent = 'No levels climbed yet.';
+                            }
+                            highestLevelDialog.showModal();
+                        });
+                        closeHighestLevelButton.addEventListener('click', () => {
+                            highestLevelDialog.close();
+                        });
                         // Bar chart for today stats
                         function renderTodayStatsBarChart() {
                             const gradeOrder = [
