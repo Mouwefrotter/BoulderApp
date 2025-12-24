@@ -51,6 +51,12 @@
     </style>
 </head>
 <body>
+                <button id="evolutionButton" style="padding: 10px 32px; font-size: 18px; background: #fd7e14;">Evolution</button>
+        <dialog id="evolutionDialog">
+            <h2 style="margin-top: 0; color: #fd7e14;">Highest Level Evolution</h2>
+            <div id="evolutionContent" style="width: 100%; max-width: 600px; margin: 0 auto;"></div>
+            <button id="closeEvolutionButton" style="margin-top: 16px;">Close</button>
+        </dialog>
     <div style="display: flex; align-items: center;">
         <svg width="700" height="400" viewBox="0 0 700 400">
         <!-- Hexagon 1 (left) -->
@@ -155,6 +161,71 @@
     </dialog>
 
     <script>
+                        // Evolution chart logic
+                        const gradeOrderEvolution = [
+                            '3', '4', '5', '6A', '6A+', '6B', '6B+', '6C', '6C+',
+                            '7A', '7A+', '7B', '7B+', '7C', '7C+'
+                        ];
+                        function getHighestLevelEvolution() {
+                            // Map: date -> highest grade index for that day
+                            const dateToHighestIdx = {};
+                            for (let i = 1; i <= 12; i++) {
+                                const data = localStorage.getItem('circle' + i);
+                                if (data) {
+                                    try {
+                                        const parsed = JSON.parse(data);
+                                        if (parsed.grade && parsed.grade !== 'fun' && Array.isArray(parsed.climbDates)) {
+                                            const idx = gradeOrderEvolution.indexOf(parsed.grade);
+                                            if (idx >= 0) {
+                                                parsed.climbDates.forEach(date => {
+                                                    if (!dateToHighestIdx[date] || idx > dateToHighestIdx[date].idx) {
+                                                        dateToHighestIdx[date] = { idx, grade: parsed.grade };
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    } catch (e) {}
+                                }
+                            }
+                            // Sort dates ascending
+                            const sortedDates = Object.keys(dateToHighestIdx).sort();
+                            return sortedDates.map(date => ({ date, idx: dateToHighestIdx[date].idx, grade: dateToHighestIdx[date].grade }));
+                        }
+
+                        const evolutionButton = document.getElementById('evolutionButton');
+                        const evolutionDialog = document.getElementById('evolutionDialog');
+                        const evolutionContent = document.getElementById('evolutionContent');
+                        const closeEvolutionButton = document.getElementById('closeEvolutionButton');
+                        evolutionButton.addEventListener('click', () => {
+                            const evolution = getHighestLevelEvolution();
+                            if (evolution.length === 0) {
+                                evolutionContent.innerHTML = '<p>No climbs recorded yet.</p>';
+                                evolutionDialog.showModal();
+                                return;
+                            }
+                            // Bar chart dimensions
+                            const barWidth = 28;
+                            const barGap = 8;
+                            const chartHeight = 220;
+                            const chartWidth = evolution.length * (barWidth + barGap) + 40;
+                            let svg = `<svg width="${chartWidth}" height="${chartHeight + 40}">`;
+                            evolution.forEach((entry, i) => {
+                                const barH = (entry.idx + 1) * (chartHeight / 15); // 1-15 scale
+                                const x = 30 + i * (barWidth + barGap);
+                                const y = chartHeight - barH + 20;
+                                svg += `<rect x="${x}" y="${y}" width="${barWidth}" height="${barH}" fill="#fd7e14" stroke="black" />`;
+                                // Grade label above bar
+                                svg += `<text x="${x + barWidth/2}" y="${y - 6}" font-size="13" fill="black" text-anchor="middle">${entry.grade}</text>`;
+                                // Date label below bar (short)
+                                svg += `<text x="${x + barWidth/2}" y="${chartHeight + 32}" font-size="11" fill="#555" text-anchor="middle">${entry.date.slice(5)}</text>`;
+                            });
+                            svg += '</svg>';
+                            evolutionContent.innerHTML = svg;
+                            evolutionDialog.showModal();
+                        });
+                        closeEvolutionButton.addEventListener('click', () => {
+                            evolutionDialog.close();
+                        });
                         // Highest level today logic
                         function getHighestLevelClimbedToday() {
                             const gradeOrderForCompare = [
