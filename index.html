@@ -80,14 +80,22 @@
         <circle cx="460" cy="120" r="20" fill="white" stroke="black" stroke-width="2" id="circle12"></circle>
         <g id="plus12group"><rect x="445" y="105" width="30" height="30" fill="transparent" style="pointer-events: all;"></rect><text x="460" y="130" text-anchor="middle" fill="black" font-size="20" id="plus12" style="pointer-events: all;">+</text></g>
         </svg>
-        <div style="display: flex; flex-direction: column; align-items: flex-start; margin-left: 32px;">
+        <div style="display: flex; flex-direction: column; align-items: flex-start; margin-left: 32px; gap: 12px;">
             <button id="statsButton" style="padding: 10px 32px; font-size: 18px;">Stats</button>
+            <button id="todayStatsButton" style="padding: 10px 32px; font-size: 18px; background: #28a745;">Today Stats</button>
         </div>
     </div>
+
     <dialog id="statsDialog">
         <h2 style="margin-top: 0;">Stats</h2>
         <div id="statsContent" style="width: 100%; max-width: 400px; margin: 0 auto;"></div>
         <button id="closeStatsButton" style="margin-top: 16px;">Close</button>
+    </dialog>
+
+    <dialog id="todayStatsDialog">
+        <h2 style="margin-top: 0; color: #28a745;">Today Stats</h2>
+        <div id="todayStatsContent" style="width: 100%; max-width: 400px; margin: 0 auto;"></div>
+        <button id="closeTodayStatsButton" style="margin-top: 16px;">Close</button>
     </dialog>
 
     <dialog id="boulderDialog">
@@ -135,6 +143,52 @@
     </dialog>
 
     <script>
+                        // Bar chart for today stats
+                        function renderTodayStatsBarChart() {
+                            const gradeOrder = [
+                                '3', '4', '5', '6A', '6A+', '6B', '6B+', '6C', '6C+',
+                                '7A', '7A+', '7B', '7B+', '7C', '7C+', 'fun'
+                            ];
+                            const gradeCounts = {};
+                            gradeOrder.forEach(g => gradeCounts[g] = 0);
+                            const today = new Date().toISOString().slice(0, 10);
+                            for (let i = 1; i <= 12; i++) {
+                                const data = localStorage.getItem('circle' + i);
+                                if (data) {
+                                    try {
+                                        const parsed = JSON.parse(data);
+                                        if (parsed.grade && Array.isArray(parsed.climbDates)) {
+                                            // Count only climbs with today's date
+                                            const todayClimbs = parsed.climbDates.filter(d => d === today).length;
+                                            if (gradeCounts.hasOwnProperty(parsed.grade)) {
+                                                gradeCounts[parsed.grade] += todayClimbs;
+                                            }
+                                        }
+                                    } catch (e) {}
+                                }
+                            }
+                            const filteredGrades = gradeOrder.filter(g => gradeCounts[g] > 0);
+                            const barHeight = 28;
+                            const barGap = 8;
+                            const labelWidth = 32;
+                            const leftMargin = 100;
+                            const maxCount = Math.max(...filteredGrades.map(g => gradeCounts[g]), 1);
+                            const chartWidth = Math.min(340, document.getElementById('todayStatsContent').offsetWidth || 340);
+                            const maxBarWidth = chartWidth - leftMargin - labelWidth - 8;
+                            let svg = `<svg width="${chartWidth}" height="${filteredGrades.length * (barHeight + barGap)}">`;
+                            filteredGrades.forEach((grade, idx) => {
+                                const count = gradeCounts[grade];
+                                const color = getGradeColor(grade);
+                                const barW = Math.max(10, Math.round((count / maxCount) * maxBarWidth));
+                                const y = idx * (barHeight + barGap);
+                                svg += `<rect x="${leftMargin}" y="${y}" width="${barW}" height="${barHeight}" fill="${color}" stroke="black" />`;
+                                svg += `<text x="10" y="${y + barHeight/2 + 7}" font-size="18" fill="black">${grade}</text>`;
+                                const labelX = leftMargin + barW + 8;
+                                svg += `<text x="${labelX}" y="${y + barHeight/2 + 7}" font-size="18" fill="black">${count}</text>`;
+                            });
+                            svg += '</svg>';
+                            document.getElementById('todayStatsContent').innerHTML = filteredGrades.length ? svg : '<p>No climbs today.</p>';
+                        }
                         // Bar chart for stats
                         function renderStatsBarChart() {
                             // Grade order
@@ -187,17 +241,29 @@
                             // Show chart
                             document.getElementById('statsContent').innerHTML = filteredGrades.length ? svg : '<p>No climbs yet.</p>';
                         }
-                // Stats button logic
-                const statsButton = document.getElementById('statsButton');
-                const statsDialog = document.getElementById('statsDialog');
-                const closeStatsButton = document.getElementById('closeStatsButton');
-                statsButton.addEventListener('click', () => {
-                    renderStatsBarChart();
-                    statsDialog.showModal();
-                });
-                closeStatsButton.addEventListener('click', () => {
-                    statsDialog.close();
-                });
+// Stats button logic
+const statsButton = document.getElementById('statsButton');
+const statsDialog = document.getElementById('statsDialog');
+const closeStatsButton = document.getElementById('closeStatsButton');
+statsButton.addEventListener('click', () => {
+    renderStatsBarChart();
+    statsDialog.showModal();
+});
+closeStatsButton.addEventListener('click', () => {
+    statsDialog.close();
+});
+
+// Today stats button logic
+const todayStatsButton = document.getElementById('todayStatsButton');
+const todayStatsDialog = document.getElementById('todayStatsDialog');
+const closeTodayStatsButton = document.getElementById('closeTodayStatsButton');
+todayStatsButton.addEventListener('click', () => {
+    renderTodayStatsBarChart();
+    todayStatsDialog.showModal();
+});
+closeTodayStatsButton.addEventListener('click', () => {
+    todayStatsDialog.close();
+});
         const circles = document.querySelectorAll('circle');
         const addDialog = document.getElementById('boulderDialog');
         const viewDialog = document.getElementById('viewDialog');
